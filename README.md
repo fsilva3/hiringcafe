@@ -40,4 +40,4 @@ The challenge was really good, I could do some researches which will be useful f
 ## Reference
 
 I've uploaded a few videos where I'm coding, it might be helpful to understand how my mind was working while coding the challenge;
-![googledrive](https://drive.google.com/drive/folders/1v96ZkMa6hvZ4Ny9pM2-KQb9eUmC7Uila?usp=sharing)
+[googledrive](https://drive.google.com/drive/folders/1v96ZkMa6hvZ4Ny9pM2-KQb9eUmC7Uila?usp=sharing)

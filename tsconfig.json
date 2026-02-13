@@ -1,0 +1,34 @@
+{
+  "$schema": "https://www.schemastore.org/tsconfig",
+  "_version": "24.0.0",
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "moduleResolution": "node16",
+    "module": "nodenext",
+    "paths": {
+      "@app/*": [
+        "*"
+      ],
+      "@test/*": [
+        "./test/*"
+      ]
+    },
+    "outDir": "./dist",
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Error",
+      "ESNext.Iterator",
+      "ESNext.Promise",
+      "dom"
+    ],
+    "target": "es2024",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+  },
+  "include": [
+    "./src/**/*",
+  ]
+}

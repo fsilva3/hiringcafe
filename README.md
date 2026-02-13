@@ -25,3 +25,19 @@ I've noticed most of the Avature hosted URLs has some patterns `/carrers`, `/job
 2. IP Restriction, some of these links are regional restricited, which will be difficult to me to test, even using my internal VPN
 3. Also, I noticed some links requires authentication, we will be skipping these ones, as it isn't the main focus;
 4. Scraping technique usually requires a HTML management, as some websites provides .json data thru XHR data requests, but avature hosted websites seems hard to find; I'll try to apply some generic data
+
+## Final Considerations
+
+The challenge was really good, I could do some researches which will be useful for myself; As it has some tricks, the way how we handle different elements no matter the website; Maybe different ATS will handle it different, that why I thought using factory would be great for this challenge.
+
+## Getting Started
+
+1. You must have Node v22+ and pnpm v10+
+2. To install the dependencies, please run `pnpm i`
+3. After the installation, run the script with `pnpm start`
+4. It should generate a ./dist/output.json containing all the jobs parsed;
+
+## Reference
+
+I've uploaded a few videos where I'm coding, it might be helpful to understand how my mind was working while coding the challenge;
+![googledrive](https://drive.google.com/drive/folders/1v96ZkMa6hvZ4Ny9pM2-KQb9eUmC7Uila?usp=sharing)

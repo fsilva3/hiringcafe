@@ -1,8 +1,8 @@
 export const CompaniesToBeScraped = [
   'bloomberg',
-  // 'uclahealth',
-  // 'cbs',
-  // 'ally',
-  // 'nva',
-  // 'qakoch',
+  'ally',
+  'uclahealth',
+  'cbs',
+  'nva',
+  'qakoch',
 ]

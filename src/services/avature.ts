@@ -8,9 +8,11 @@ import {
 import fetch from 'node-fetch'
 import * as cheerio from 'cheerio'
 import type { CheerioAPI } from 'cheerio'
+import { safeFetch } from '@app/shared/fetch'
 
 const REGEX_TYPE_URL = /avature.net\/([a-z]*)/
 const REGEX_MATCH_TITLE = /JobDetail\/([a-zA-Z-0-9]*)/
+const REGEX_LOCATION = /Location\s+([A-Za-z ,\-]+)/
 
 const extractLinks = ($: CheerioAPI, source: string): string[] => {
   const matches = REGEX_TYPE_URL.exec(source)
@@ -70,6 +72,11 @@ const extractDescription = (
 
   // maybe length > 400
   // document.querySelectorAll('p').forEach(el => console.log(el.textContent.length))
+  const candidates = ['article', '.article__content', '.crmDescription', 'p']
+  for (const sel of candidates) {
+    const text = $(sel).text().trim()
+    if (text.length > 400) return text.replaceAll('\n', '').trim()
+  }
 
   return ''
 }
@@ -82,21 +89,51 @@ const extractDatePosted = (
     return new Date(structuredJson?.datePosted)
   }
 
-  return undefined
+  const text = $('body').text()
+  const match = text.match(/Posted:\s*(.*)/i)
+  const datePosted = match?.[1] || null
+
+  return datePosted ? new Date(datePosted) : undefined
 }
 
 const extractLocation = (
   $: CheerioAPI,
   structuredJson?: LDJsonStructuredJson
 ): string | undefined => {
-  return undefined
+  const description = extractDescription($, structuredJson)
+  const match = REGEX_LOCATION.exec(description)
+  if (match?.[1]) {
+    return match?.[1].trim()
+  }
+
+  const candidates = ['.fieldSet', 'div']
+  for (const sel of candidates) {
+    const text = $(sel).text().trim()
+    const match = REGEX_LOCATION.exec(text)
+    if (match?.[1]) return match?.[1].trim()
+  }
 }
 
 const extractSalary = (
   $: CheerioAPI,
   structuredJson?: LDJsonStructuredJson
 ): string | undefined => {
+  const description = $('main').text().trim()
+  const matches = description.match(/\$\d{2,3}(?:,\d{3})+/g)
+  if (matches?.[1]) {
+    return matches?.[1].trim()
+  }
+
   return undefined
+}
+
+export const extractApplyURL = (
+  $: CheerioAPI,
+  structuredJson?: LDJsonStructuredJson
+): string => {
+  const href = $("a:contains('Apply')").attr('href')
+
+  return href || ''
 }
 
 const extractMetadata = (
@@ -123,33 +160,23 @@ const extractJobDetails = async (
   link: string
 ): Promise<JobDescriptionData | null> => {
   console.log(`Extracting link ${link}`)
-  const response = await fetch(link)
-  if (response.status === HTTP_STATUS.NOT_FOUND) {
+  const response = await safeFetch(link)
+  if (!response || response.status !== HTTP_STATUS.OK) {
     return null
   }
 
-  const html = await response.json()
+  const html = await response.text()
   const $ = cheerio.load(html)
 
   const element = $(`script[type="application/ld+json"]`)
   if (element.length > 0 && element[0].children[0]) {
-    const structuredJson = element.data() as unknown as LDJsonStructuredJson
+    const structuredJson = JSON.parse(element.text()) as LDJsonStructuredJson
     // const jobDetailsParsed = JSON.parse()
     // I'll need to debug;
-    /*
-    {
-      "@context": "https:\/\/schema.org\/",
-      "@type": "JobPosting",
-      "title": "Sr Analyst - Quantitative Modeling",
-      "description": "Reporting to the Director of Quantitative Modeling, this position's primary responsibilities will include the development of loss forecasting, credit scoring, remarketing models, and collection related models that support the originations strategy for Ally\u2019s Auto business line. The ideal candidate will have prior model development experience, strong data management, quantitative, and programming skills. Experience in the financial services industry is desired. This position is based in Charlotte, NC. Will consider other locations for internal candidates.",
-      "hiringOrganization": { "@type": "Organization", "name": "Ally Financial" },
-      "datePosted": "2026-02-11"
-    }
-    */
     return {
       title: extractTitle($, link, structuredJson),
       description: extractDescription($, structuredJson),
-      applicationURL: link,
+      applicationURL: extractApplyURL($, structuredJson),
       metadata: extractMetadata($, structuredJson),
     }
   }
@@ -157,22 +184,23 @@ const extractJobDetails = async (
   return {
     title: extractTitle($, link),
     description: extractDescription($),
-    applicationURL: link,
+    applicationURL: extractApplyURL($),
     metadata: extractMetadata($),
   }
 }
 
 const extractJobs = async (company: string): Promise<JobDescriptionData[]> => {
+  console.log(`Extracting JobDetails from ${company}`)
   const urls = getAvatureURLs(company)
 
   const jobDescriptions: JobDescriptionData[] = []
   for (const url of urls) {
     // check if the url doesn't return 404
-    const response = await fetch(url)
-    if (response.status === HTTP_STATUS.NOT_FOUND) {
+    const response = await safeFetch(url)
+    if (!response || response.status !== HTTP_STATUS.OK) {
       continue
     }
-    const html = await response.json()
+    const html = await response.text()
     const $ = cheerio.load(html)
 
     // to extract more jobs I would need to paginate to the others pages, but for now let's keep the first page

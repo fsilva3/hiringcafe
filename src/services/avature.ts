@@ -162,6 +162,9 @@ const extractJobDetails = async (
   console.log(`Extracting link ${link}`)
   const response = await safeFetch(link)
   if (!response || response.status !== HTTP_STATUS.OK) {
+    console.log(
+      `[${link}] Network error, or status different than success ${response?.status || 'unknown status'}`
+    )
     return null
   }
 
@@ -197,10 +200,17 @@ const extractJobs = async (company: string): Promise<JobDescriptionData[]> => {
   for (const url of urls) {
     // check if the url doesn't return 404
     const response = await safeFetch(url)
-    if (!response || response.status !== HTTP_STATUS.OK) {
+    if (!response || response.status >= 300) {
+      console.log(
+        `[${url}] Network error, or status different than success ${response?.status || 'unknown status'}`
+      )
       continue
     }
     const html = await response.text()
+    if (!html) {
+      console.log('HTML empty')
+      continue
+    }
     const $ = cheerio.load(html)
 
     // to extract more jobs I would need to paginate to the others pages, but for now let's keep the first page
